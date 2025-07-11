@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Image to Text (OCR) Demo</title>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #f5f6fa;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      color: #222;
+    }
+    body {
+      min-height: 100vh;
+      background: #f5f6fa;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      margin: 48px auto 0 auto;
+      background: #fff;
+      border-radius: 22px;
+      box-shadow: 0 8px 32px rgba(60,60,60,0.08), 0 1.5px 4px rgba(60,60,60,0.04);
+      padding: 48px 4vw 40px 4vw;
+      width: 75vw;
+      max-width: 1200px;
+      min-width: 320px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h2 {
+      font-weight: 600;
+      font-size: 1.5rem;
+      margin-bottom: 28px;
+      letter-spacing: -0.5px;
+    }
+    #drop-area {
+      border: 2px dashed #d1d5db;
+      background: #f8fafc;
+      border-radius: 16px;
+      padding: 36px 0;
+      text-align: center;
+      color: #6b7280;
+      font-size: 1.1rem;
+      transition: background 0.2s, border-color 0.2s;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 24px;
+      box-sizing: border-box;
+    }
+    #drop-area:hover, #drop-area:focus {
+      background: #e5e7eb;
+      border-color: #0071e3;
+      color: #222;
+    }
+    #output {
+      width: 100%;
+      height: 140px;
+      margin-top: 10px;
+      border-radius: 12px;
+      border: 1.5px solid #e5e7eb;
+      background: #f8fafc;
+      font-size: 1rem;
+      padding: 14px;
+      box-sizing: border-box;
+      resize: vertical;
+      font-family: inherit;
+      color: #222;
+      transition: border-color 0.2s;
+    }
+    #output:focus {
+      border-color: #0071e3;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Drag & Drop Image to Extract Text</h2>
+    <div id="drop-area">Drop image here or click to select</div>
+    <textarea id="output" placeholder="Extracted text will appear here"></textarea>
+  </div>
+  <script>
+    const dropArea = document.getElementById('drop-area');
+    const output = document.getElementById('output');
+
+    dropArea.addEventListener('click', () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = e => handleFiles(e.target.files);
+      input.click();
+    });
+
+    dropArea.addEventListener('dragover', e => {
+      e.preventDefault();
+      dropArea.style.background = '#eee';
+    });
+
+    dropArea.addEventListener('dragleave', e => {
+      e.preventDefault();
+      dropArea.style.background = '';
+    });
+
+    dropArea.addEventListener('drop', e => {
+      e.preventDefault();
+      dropArea.style.background = '';
+      handleFiles(e.dataTransfer.files);
+    });
+
+    function handleFiles(files) {
+      if (files.length === 0) return;
+      const file = files[0];
+      Tesseract.recognize(
+        file,
+        'eng',
+        { logger: m => console.log(m) }
+      ).then(({ data: { text } }) => {
+        output.value = text;
+      });
+    }
+  </script>
+</body>
+</html>
