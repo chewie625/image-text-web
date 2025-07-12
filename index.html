@@ -26,7 +26,7 @@
       box-shadow: 0 8px 32px rgba(60,60,60,0.08), 0 1.5px 4px rgba(60,60,60,0.04);
       padding: 48px 4vw 40px 4vw;
       width: 75vw;
-      max-width: 1200px;
+      max-width: 600px;
       min-width: 320px;
       display: flex;
       flex-direction: column;
@@ -38,24 +38,66 @@
       margin-bottom: 28px;
       letter-spacing: -0.5px;
     }
-    #drop-area {
-      border: 2px dashed #d1d5db;
-      background: #f8fafc;
-      border-radius: 16px;
-      padding: 36px 0;
-      text-align: center;
-      color: #6b7280;
-      font-size: 1.1rem;
-      transition: background 0.2s, border-color 0.2s;
-      cursor: pointer;
+    #prompt-area {
+      position: relative;
       width: 100%;
+      min-height: 56px;
+      background: #f8fafc;
+      border: 2px solid #d1d5db;
+      border-radius: 16px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
       margin-bottom: 24px;
       box-sizing: border-box;
+      cursor: text;
+      outline: none;
+      transition: border-color 0.2s;
     }
-    #drop-area:hover, #drop-area:focus {
-      background: #e5e7eb;
+    #prompt-area:focus {
       border-color: #0071e3;
+    }
+    #input-row {
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      padding: 12px 48px 12px 48px;
+      font-size: 1.1rem;
       color: #222;
+      font-family: inherit;
+    }
+    #blinking-cursor {
+      display: inline-block;
+      width: 10px;
+      height: 1.2em;
+      background: none;
+      border-left: 2px solid #0071e3;
+      margin-left: 2px;
+      animation: blink 1s steps(1) infinite;
+      vertical-align: middle;
+    }
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+    #attach-btn {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      background: none;
+      border: none;
+      padding: 4px;
+      cursor: pointer;
+      border-radius: 50%;
+      transition: background 0.2s;
+    }
+    #attach-btn:hover {
+      background: #e5e7eb;
+    }
+    #image-preview {
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
     #output {
       width: 100%;
@@ -80,47 +122,118 @@
 </head>
 <body>
   <div class="container">
-    <h2>Drag & Drop Image to Extract Text</h2>
-    <div id="drop-area">Drop image here or click to select</div>
+    <h2>Image to Text (OCR) Demo</h2>
+    <div id="prompt-area" tabindex="0">
+      <div id="input-row">
+        <span id="blinking-cursor"></span>
+      </div>
+      <div id="image-preview" style="display:none; margin-top:16px;">
+        <img id="preview-img" style="max-width:300px; max-height:200px; border-radius:10px; box-shadow:0 2px 8px #ccc;">
+        <button id="clear-btn" style="display:none; margin-left:12px;">Clear</button>
+      </div>
+      <input type="file" id="file-input" accept="image/*" style="display:none;" />
+      <button id="attach-btn" title="Attach image" type="button">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M17.657 11.657l-6.364 6.364a4 4 0 01-5.657-5.657l9.192-9.192a3 3 0 014.243 4.243l-9.193 9.192a2 2 0 01-2.828-2.828l8.485-8.485" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+    </div>
     <textarea id="output" placeholder="Extracted text will appear here"></textarea>
   </div>
   <script>
-    const dropArea = document.getElementById('drop-area');
+    const promptArea = document.getElementById('prompt-area');
+    const attachBtn = document.getElementById('attach-btn');
+    const fileInput = document.getElementById('file-input');
     const output = document.getElementById('output');
+    const imagePreview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    const clearBtn = document.getElementById('clear-btn');
 
-    dropArea.addEventListener('click', () => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.onchange = e => handleFiles(e.target.files);
-      input.click();
+    // Focus blinking cursor when prompt area is clicked
+    promptArea.addEventListener('click', () => {
+      promptArea.focus();
     });
 
-    dropArea.addEventListener('dragover', e => {
-      e.preventDefault();
-      dropArea.style.background = '#eee';
+    // Remove default click-to-upload behavior
+    // (No file dialog on prompt area click)
+
+    // Open file dialog when paperclip is clicked
+    attachBtn.addEventListener('click', (e) => {
+      fileInput.value = '';
+      fileInput.click();
+      e.stopPropagation();
     });
 
-    dropArea.addEventListener('dragleave', e => {
-      e.preventDefault();
-      dropArea.style.background = '';
+    // Handle file selection
+    fileInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
     });
 
-    dropArea.addEventListener('drop', e => {
+    // Drag & drop support
+    promptArea.addEventListener('dragover', e => {
       e.preventDefault();
-      dropArea.style.background = '';
+      promptArea.style.background = '#eee';
+    });
+    promptArea.addEventListener('dragleave', e => {
+      e.preventDefault();
+      promptArea.style.background = '';
+    });
+    promptArea.addEventListener('drop', e => {
+      e.preventDefault();
+      promptArea.style.background = '';
       handleFiles(e.dataTransfer.files);
+    });
+
+    // Paste support
+    promptArea.addEventListener('paste', function(e) {
+      const items = e.clipboardData && e.clipboardData.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf('image') !== -1) {
+          const file = items[i].getAsFile();
+          if (file) {
+            handleFiles([file]);
+            e.preventDefault();
+            break;
+          }
+        }
+      }
+    });
+
+    clearBtn.addEventListener('click', () => {
+      previewImg.src = '';
+      imagePreview.style.display = 'none';
+      clearBtn.style.display = 'none';
+      output.value = '';
+    });
+
+    promptArea.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+        // Undo image paste: clear preview and output
+        previewImg.src = '';
+        imagePreview.style.display = 'none';
+        clearBtn.style.display = 'none';
+        output.value = '';
+        e.preventDefault(); // Prevent default undo if you want
+      }
     });
 
     function handleFiles(files) {
       if (files.length === 0) return;
       const file = files[0];
+      // Show image preview
+      const url = URL.createObjectURL(file);
+      previewImg.src = url;
+      imagePreview.style.display = 'flex';
+      clearBtn.style.display = 'inline-block';
       Tesseract.recognize(
         file,
         'eng',
         { logger: m => console.log(m) }
       ).then(({ data: { text } }) => {
         output.value = text;
+        // Optionally, revoke the object URL after use
+        // URL.revokeObjectURL(url);
       });
     }
   </script>
