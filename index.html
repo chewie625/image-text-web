@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <title>Image to Text (OCR) Demo</title>
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-YOUR_PUBLISHER_ID" crossorigin="anonymous"></script>
   <style>
     html, body {
       height: 100%;
@@ -19,6 +21,57 @@
       margin: 0;
       padding: 0;
     }
+    
+    /* Ad Banner Styles */
+    .ad-banner {
+      width: 100%;
+      max-width: 728px;
+      height: 90px;
+      margin: 20px auto;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: #6c757d;
+      font-size: 14px;
+    }
+    
+    .ad-banner.sidebar {
+      width: 300px;
+      height: 600px;
+      position: fixed;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+    }
+    
+    .ad-banner.mobile {
+      width: 100%;
+      max-width: 320px;
+      height: 50px;
+      margin: 15px auto;
+    }
+    
+    .ad-banner.bottom {
+      margin-top: 40px;
+      margin-bottom: 20px;
+    }
+    
+    /* Responsive design for ads */
+    @media (max-width: 768px) {
+      .ad-banner.sidebar {
+        display: none;
+      }
+      .ad-banner {
+        max-width: 320px;
+        height: 50px;
+      }
+    }
+    
     .container {
       margin: 48px auto 0 auto;
       background: #fff;
@@ -118,9 +171,53 @@
       border-color: #0071e3;
       outline: none;
     }
+    
+    /* Premium features styling */
+    .premium-features {
+      margin-top: 20px;
+      padding: 15px;
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 8px;
+      text-align: center;
+    }
+    
+    .premium-btn {
+      background: #0071e3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: background 0.2s;
+    }
+    
+    .premium-btn:hover {
+      background: #0056b3;
+    }
   </style>
 </head>
 <body>
+  <!-- Top Ad Banner -->
+  <div class="ad-banner" id="top-ad">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+         data-ad-slot="YOUR_AD_SLOT_ID"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+  </div>
+
+  <!-- Sidebar Ad (Desktop only) -->
+  <div class="ad-banner sidebar" id="sidebar-ad">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+         data-ad-slot="YOUR_SIDEBAR_AD_SLOT"
+         data-ad-format="auto"></ins>
+  </div>
+
   <div class="container">
     <h2>Image to Text (OCR) Demo</h2>
     <div id="prompt-area" tabindex="0">
@@ -139,7 +236,34 @@
       </button>
     </div>
     <textarea id="output" placeholder="Extracted text will appear here"></textarea>
+    
+    <!-- Premium Features Section -->
+    <div class="premium-features">
+      <h3>🚀 Upgrade to Premium</h3>
+      <p>Get unlimited OCR processing, multiple language support, and advanced features!</p>
+      <button class="premium-btn" onclick="showPremiumModal()">Upgrade Now - $9.99/month</button>
+    </div>
   </div>
+
+  <!-- Bottom Ad Banner -->
+  <div class="ad-banner bottom" id="bottom-ad">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+         data-ad-slot="YOUR_BOTTOM_AD_SLOT"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+  </div>
+
+  <!-- Mobile Ad Banner -->
+  <div class="ad-banner mobile" id="mobile-ad">
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-YOUR_PUBLISHER_ID"
+         data-ad-slot="YOUR_MOBILE_AD_SLOT"
+         data-ad-format="auto"></ins>
+  </div>
+
   <script>
     const promptArea = document.getElementById('prompt-area');
     const attachBtn = document.getElementById('attach-btn');
@@ -148,6 +272,35 @@
     const imagePreview = document.getElementById('image-preview');
     const previewImg = document.getElementById('preview-img');
     const clearBtn = document.getElementById('clear-btn');
+
+    // Initialize AdSense ads
+    function initializeAds() {
+      try {
+        (adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (e) {
+        console.log('AdSense not loaded yet');
+      }
+    }
+
+    // Track ad impressions and clicks
+    function trackAdEvent(eventType, adPosition) {
+      // You can integrate with Google Analytics or your own analytics
+      console.log(`Ad ${eventType} at ${adPosition}`);
+      
+      // Example: Send to your analytics service
+      if (typeof gtag !== 'undefined') {
+        gtag('event', 'ad_' + eventType, {
+          'ad_position': adPosition,
+          'page_title': document.title
+        });
+      }
+    }
+
+    // Premium modal function
+    function showPremiumModal() {
+      alert('Premium features coming soon! This would integrate with a payment processor like Stripe.');
+      // In a real implementation, you'd show a modal with payment options
+    }
 
     // Focus blinking cursor when prompt area is clicked
     promptArea.addEventListener('click', () => {
@@ -232,10 +385,35 @@
         { logger: m => console.log(m) }
       ).then(({ data: { text } }) => {
         output.value = text;
+        // Track successful OCR completion
+        trackAdEvent('ocr_completed', 'main_content');
         // Optionally, revoke the object URL after use
         // URL.revokeObjectURL(url);
       });
     }
+
+    // Initialize ads when page loads
+    window.addEventListener('load', function() {
+      initializeAds();
+      
+      // Track page view for analytics
+      trackAdEvent('page_view', 'all');
+    });
+
+    // Track ad visibility
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const adId = entry.target.id;
+          trackAdEvent('impression', adId);
+        }
+      });
+    });
+
+    // Observe all ad containers
+    document.querySelectorAll('.ad-banner').forEach(ad => {
+      observer.observe(ad);
+    });
   </script>
 </body>
 </html>
